@@ -507,9 +507,54 @@ Instead, DASR targets the large category of applications where those resources a
 
 ---
 
-# 5. Recommended Settings and Tuning Philosophy
+# 5. Known Limitations
 
-DASR is designed around adaptive behavior rather than fixed presets.
+Some artifacts originate from problems deeper inside the rendering pipeline and cannot be completely reconstructed after the final image has already been produced.
+
+**Shadow Aliasing**
+Shadow maps are generated before ReShade receives the final image.
+If an engine produces unstable shadow silhouettes due to low resolution shadow maps, cascaded shadow transitions, or unstable shadow filtering, DASR can only reduce the visible shimmer.
+It cannot recreate missing shadow information.
+
+**Alpha-Tested and Dithered Materials**
+Vegetation, fences, leaves, and other alpha-tested materials are among the most difficult cases.
+These objects often rely on:
+* transparency masking;
+* temporal dithering;
+* unstable coverage patterns.
+DASR can reduce the visible flickering caused by sampling instability, but the underlying geometry information may already be lost.
+
+**Engine Motion Artifacts**
+DASR does not have access to engine motion vectors.
+Its temporal prediction uses a lightweight local heuristic rather than full motion reconstruction.
+This makes it widely compatible, but it cannot perfectly understand complex object motion, deformation, or particle systems.
+
+**Poor Source Rendering**
+No post-processing shader can fully compensate for insufficient source information.
+Examples:
+* extremely low-resolution shadow maps;
+* missing geometry detail;
+* aggressive engine optimizations;
+* unstable depth precision.
+
+DASR focuses on stabilizing the final image, not replacing missing rendering data.
+
+**Depth Buffer Limitations**
+Depth weighting depends on the quality and availability of the ReShade depth buffer.
+Incorrect depth configuration may reduce or disable depth-based prioritization.
+The shader will continue operating through the other detectors, but the distance-based weighting will not behave correctly.
+
+**The Goal**
+DASR is not designed to make every engine behave like a modern AAA renderer.
+Its purpose is more specific:
+To provide a smarter adaptive correction layer for applications where traditional solutions are limited, unreliable, or unavailable.
+It does not hide all rendering problems.
+It identifies the unstable parts of the image and reduces the artifacts that are most visible to human perception.
+
+---
+
+# 6. Recommended Settings and Tuning Philosophy
+
 The default values are intended to provide a balanced configuration, but different engines and rendering pipelines produce different types of instability.
 The goal is not to maximize filtering strength.
 The goal is to find the minimum intervention required to eliminate visible shimmer while preserving detail.
@@ -585,7 +630,7 @@ It should simply make unstable details stop changing unpredictably over time.
 
 ---
 
-# 6. Requirements & Compatibility
+# 7. Requirements & Compatibility
 
 DASR is designed to run as a ReShade post-processing shader and does not require engine integration.
 
