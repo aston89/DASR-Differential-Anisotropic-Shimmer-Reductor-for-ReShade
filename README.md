@@ -64,9 +64,7 @@ The goal is not to soften the entire image, but to remove unstable information w
 # 3. How DASR work
 
 ## 3a. Grid / Brick Divergence Detector
-
-**Overview**
-The Grid / Brick Divergence Detector is the primary instability sensor used by DASR.
+This is the primary instability sensor used by DASR.
 The core idea behind this detector is simple:
 **A pixel that changes significantly when observed through different sampling arrangements is likely to be unstable.**
 Traditional anti-aliasing methods generally attempt to reconstruct a smoother representation of the image after sampling. DASR instead analyzes the sampling process itself, searching for areas where the current pixel representation is highly sensitive to small spatial changes.
@@ -166,9 +164,7 @@ This weighting reflects the main design philosophy of DASR:
 
 
 ## 3b. Periodicity Detector
-
-**Overview**
-The Periodicity Detector is a secondary analysis module designed to identify repeating local structures that are particularly vulnerable to temporal instability.
+This is a secondary analysis module designed to identify repeating local structures that are particularly vulnerable to temporal instability.
 Many shimmer artifacts do not come from isolated edges, but from repeated high-frequency patterns:
 * fences and railings
 * vegetation clusters
@@ -254,8 +250,8 @@ Some pixels are dangerous not because they are sharp, but **because they repeat*
 
 
 ## 3c. Temporal Instability Detector
-
-The Grid-Brick detector is extremely effective at identifying structures that are sensitive to sampling, but not every sensitive structure actually produces visible shimmer. Some details remain perfectly stable over time even if they have a high spatial frequency.
+The Grid-Brick detector is extremely effective at identifying structures that are sensitive to sampling, but not every sensitive structure actually produces visible shimmer.
+Some details remain perfectly stable over time even if they have a high spatial frequency.
 This is where the temporal detector comes into play.
 Instead of simply comparing the current frame with the previous one, DASR performs a small local search inside the history buffer. For every pixel, a 3×3 neighborhood is examined in the previous frame to find the sample that most closely matches the current color.
 This approach is intentionally simple but surprisingly robust.
@@ -275,7 +271,6 @@ The resulting temporal confidence is then blended with the other detectors to bu
 
 
 ## 3d. Unified Risk Map
-
 Each detector implemented by DASR measures a different aspect of the aliasing problem.
 The Grid-Brick detector evaluates spatial sampling instability.
 The temporal detector measures whether that instability actually changes over time.
@@ -306,8 +301,7 @@ FinalRisk =
 Normalizing by the total weight ensures that the output always remains within a predictable range regardless of the selected configuration.
 This design also makes the algorithm highly tunable.
 Different rendering engines exhibit different failure modes.
-Some engines mainly suffer from temporal shimmer.
-Others produce strong moiré patterns.
+**Some engines mainly suffer from temporal shimmer, others produce strong moiré patterns.**
 Some scenes are dominated by distant foliage, while others mainly contain hard geometric edges.
 Instead of hardcoding assumptions, DASR exposes the contribution of each detector, allowing the risk map to adapt to the characteristics of the rendering pipeline without modifying the algorithm itself.
 The resulting value represents a probability-like confidence that the current pixel is affected by visible aliasing and should therefore receive adaptive filtering in the following stage.
@@ -319,7 +313,6 @@ Its sole purpose is to answer a single question:
 Only after this decision has been made does the second stage of the pipeline determine how, where, and how much filtering should actually be applied.
 
 ## 3e. The Surgeon: Anisotropic Adaptive Low-Pass
-
 Once the Risk Map has identified pixels that are likely to produce visible shimmer, DASR moves into the correction stage.
 Unlike traditional anti-aliasing techniques, which apply a global filtering strategy across the entire image, DASR only modifies areas where instability has been detected.
 The objective is simple:
@@ -376,9 +369,7 @@ The filter activates only where the image itself indicates that intervention is 
 
 
 ## 3f. Temporal Memory and Hysteresis
-
-**A temporal algorithm has a fundamental challenge:**
-The decision made in the current frame can itself become unstable.
+A temporal algorithm has a fundamental challenge: The decision made in the current frame can itself become unstable.
 If a pixel is considered problematic in one frame but harmless in the next, a reactive filter may continuously turn on and off. This creates a secondary form of flickering, not caused by the game engine, but by the correction system itself.
 To prevent this behavior, DASR introduces a lightweight temporal memory system.
 At the end of every frame, the shader stores the current image together with the previously calculated alias confidence inside the History Buffer.
@@ -516,7 +507,6 @@ Instead, DASR targets the large category of applications where those resources a
 
 ---
 
-
 # 5. Recommended Settings and Tuning Philosophy
 
 DASR is designed around adaptive behavior rather than fixed presets.
@@ -610,7 +600,7 @@ DASR can operate without depth information, but the depth weighting component wi
 Because many modern engines use reversed depth or custom depth layouts (unity e.g.), correct ReShade depth buffer configuration may be required.
 If depth data is unavailable or incorrect, DASR will continue to function using the remaining detectors.
 
-*+Compatibility**
+**Compatibility**
 DASR is especially useful for:
 * older rendering engines;
 * simulation software;
