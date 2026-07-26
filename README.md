@@ -19,7 +19,7 @@ Instead of applying a uniform blur or relying only on temporal history, it evalu
 The complete pipeline follows three main stages:
 **Detect - Predict - Stabilize**
 
-## 2a. Detect — Local instability analysis
+## 2a. Detect - Local instability analysis
 The first stage builds a risk map by analyzing the current frame.
 DASR combines several detectors:
 
