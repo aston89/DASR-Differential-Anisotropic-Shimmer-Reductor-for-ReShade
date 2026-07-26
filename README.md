@@ -1,3 +1,21 @@
+Table of Contents
+
+1. Introduction
+
+2. What DASR Does
+
+3. How DASR Works
+
+4. Performance Considerations and Shader Cost
+
+5. Known Limitations
+
+6. Recommended Settings and Tuning Philosophy
+
+7. Requirements & Compatibility
+
+ 
+
 # 1. Introduction
 
 Modern high-end rendering pipelines have access to increasingly sophisticated solutions for image reconstruction and temporal stability. Techniques such as advanced temporal reconstruction, machine learning upscalers and vendor-specific solutions can greatly improve image quality when properly integrated into the rendering pipeline.
