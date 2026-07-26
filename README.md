@@ -8,7 +8,7 @@
 6. [Recommended Settings and Tuning Philosophy](#6-recommended-settings-and-tuning-philosophy)
 7. [Requirements & Compatibility](#7-requirements--compatibility)
 
- 
+ ---
 
 # 1. Introduction
 
