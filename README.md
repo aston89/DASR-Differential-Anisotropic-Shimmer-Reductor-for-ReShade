@@ -1,18 +1,12 @@
-Table of Contents
+# Table of Contents
 
-1. Introduction
-
-2. What DASR Does
-
-3. How DASR Works
-
-4. Performance Considerations and Shader Cost
-
-5. Known Limitations
-
-6. Recommended Settings and Tuning Philosophy
-
-7. Requirements & Compatibility
+1. [Introduction](#1-introduction)
+2. [What DASR Does](#2-what-dasr-does)
+3. [How DASR Works](#3-how-dasr-works)
+4. [Performance Considerations and Shader Cost](#4-performance-considerations-and-shader-cost)
+5. [Known Limitations](#5-known-limitations)
+6. [Recommended Settings and Tuning Philosophy](#6-recommended-settings-and-tuning-philosophy)
+7. [Requirements & Compatibility](#7-requirements--compatibility)
 
  
 
