@@ -54,9 +54,9 @@ This separation allows the stabilization stage to react differently depending on
 The final stage applies a directional low-pass filter only where needed.
 DASR uses local structure analysis to determine the dominant orientation of the image features. The filter is then applied perpendicular to the detected structure, reducing unstable high-frequency variations while preserving edges.
 The filtering strength adapts dynamically:
-* Low risk → minimal intervention
-* Medium risk → limited filtering
-* High risk → stronger stabilization
+* Low risk : minimal intervention
+* Medium risk : limited filtering
+* High risk : stronger stabilization
 The goal is not to soften the entire image, but to remove unstable information while maintaining perceived sharpness.
 
 ---
