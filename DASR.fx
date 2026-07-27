@@ -1055,7 +1055,7 @@ float4 PS_CopySpatialToPrev(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV
 // =============================================================================
 // TECHNIQUE
 // =============================================================================
-technique DASR_v2_5o < ui_tooltip = "DASR v2.5o (Shimmer Reductor)"; > {
+technique DASR_v2_5o < ui_tooltip = "DASR v2.5o (Dynamic Adaptive Shimmer Reductor)"; > {
     pass RiskMapPass
     {
         VertexShader = PostProcessVS;
