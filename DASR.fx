@@ -1,5 +1,5 @@
 // =============================================================================
-// DASR v2.5o-debug-fix (Hybrid Grid-Brick Divergence + Anisotropic Surgical Low-Pass)
+// DASR v2.5o (Hybrid Grid-Brick Divergence + Anisotropic Surgical Low-Pass)
 // Author: Baudelaire (Aston89) / Github: https://github.com/aston89/
 // =============================================================================
 
@@ -955,7 +955,7 @@ float4 PS_PhaseMoireSuppression(float4 pos : SV_Position, float2 uv : TEXCOORD) 
 // =============================================================================
 float4 PS_HistoryCopy(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
 {
-    if (DebugMode != 0 && DebugMode != 5 && DebugMode != 6 && DebugMode != 9) {
+    if (DebugMode != 0) {
         return tex2D(HistoryPrevSampler, uv);
     }
 
@@ -1055,7 +1055,7 @@ float4 PS_CopySpatialToPrev(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV
 // =============================================================================
 // TECHNIQUE
 // =============================================================================
-technique DASR_v2_5o-debug-fix < ui_tooltip = "DASR (Differential Adaptive Shimmer Reductor)"; > {
+technique DASR_v2_5o < ui_tooltip = "DASR v2.5o (Differential Adaptive Shimmer Reductor)"; > {
     pass RiskMapPass
     {
         VertexShader = PostProcessVS;
