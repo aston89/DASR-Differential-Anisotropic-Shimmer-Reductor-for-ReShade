@@ -73,7 +73,8 @@ The filtering strength adapts dynamically:
 * Low risk : minimal intervention
 * Medium risk : limited filtering
 * High risk : stronger stabilization
-The goal is not to soften the entire image, but to remove unstable information while maintaining perceived sharpness.
+
+The stabilization stage is composed of multiple complementary passes rather than a single filter. An adaptive anisotropic spatial filter first removes high-frequency instability while preserving local structure. A subsequent phase-aware stabilization stage analyzes short temporal sequences to suppress alternating sampling-phase artifacts such as moiré shimmer. Finally, a lightweight temporal history stage provides controlled temporal consistency without relying on full image reconstruction.
 
 ---
 
@@ -285,6 +286,8 @@ In practice, a pixel is considered temporally dangerous only when:
 This coupling dramatically reduces false positives compared to traditional temporal difference approaches, preventing moving objects from being treated as shimmer unless they also exhibit unstable sampling characteristics.
 The resulting temporal confidence is then blended with the other detectors to build the final unified risk map.
 
+The Temporal Instability Detector focuses on measuring whether sampling-sensitive structures actually change over time. It is intentionally conservative and does not directly perform temporal correction. Instead, its output contributes to the global risk estimation, allowing later stages of the pipeline to decide how temporal information should be used.
+
 
 ## 3d. Unified Risk Map
 Each detector implemented by DASR measures a different aspect of the aliasing problem.
@@ -383,14 +386,50 @@ By separating detection from correction, DASR avoids the compromise of tradition
 
 The filter activates only where the image itself indicates that intervention is required.
 
+## 3f. Phase-Aware Temporal Stabilization
 
-## 3f. Temporal Memory and Hysteresis
+Although the adaptive anisotropic filter removes most high-frequency shimmer, some temporal artifacts originate from alternating sampling phases rather than simple spatial instability.
+
+One of the most common examples is moiré shimmer.
+
+Unlike ordinary aliasing, moiré often exhibits an oscillating temporal behavior where the rendered pattern alternates between multiple valid sampling states as the camera moves.
+
+A traditional temporal average cannot reliably distinguish this phenomenon from normal motion and may either leave the shimmer untouched or introduce visible ghosting.
+
+To address this, DASR performs a lightweight phase-aware temporal analysis after the spatial filtering stage.
+
+Instead of comparing only the current frame against the previous one, DASR temporarily stores two previous spatially filtered frames.
+
+This allows the shader to recognize characteristic alternating temporal sequences such as: **A B A**
+
+where the current frame resembles the frame from two frames earlier while differing from the immediately preceding one.
+
+This behavior is typical of sampling-phase alternation rather than genuine scene motion.
+
+When this pattern is detected, DASR locally blends only the alternating phase information while preserving the current spatial structure.
+
+Several safeguards prevent false detections:
+
+* local neighborhood matching
+* motion rejection
+* risk gating
+* spatial neighborhood clamping
+
+As a result, phase stabilization activates only where temporal alternation is both spatially plausible and supported by the existing instability detectors.
+Unlike conventional temporal accumulation, this stage does not attempt to reconstruct missing image information.
+Its purpose is specifically to suppress phase oscillation while minimizing ghosting and preserving local detail.
+
+---
+
+## 3g. Temporal Memory and Hysteresis
 A temporal algorithm has a fundamental challenge: The decision made in the current frame can itself become unstable.
 If a pixel is considered problematic in one frame but harmless in the next, a reactive filter may continuously turn on and off. This creates a secondary form of flickering, not caused by the game engine, but by the correction system itself.
 To prevent this behavior, DASR introduces a lightweight temporal memory system.
 At the end of every frame, the shader stores the current image together with the previously calculated alias confidence inside the History Buffer.
 The next frame can then compare the new analysis with the previous decision.
-The stored information is not used to accumulate image data or blend previous frames together.
+
+The stored information is primarily used to stabilize temporal decisions and to support phase-aware analysis. Unlike conventional Temporal Anti-Aliasing, DASR does not rely on long-term accumulation or full image reconstruction. Previous frames are only consulted locally when they provide evidence of sampling-phase instability.
+
 This is a deliberate design choice.
 Unlike traditional Temporal Anti-Aliasing methods, DASR does not rely on temporal accumulation to reconstruct missing detail. The history buffer is only used as a memory of previous instability decisions.
 This keeps the correction process spatially controlled and avoids the common temporal artifacts associated with history blending:
@@ -448,9 +487,10 @@ DASR is designed as an adaptive post-processing algorithm.
 Its goal is not to apply a complex filter uniformly across the entire image, but to analyze the frame, identify unstable regions, and concentrate processing only where visible shimmer is likely to occur.
 
 The shader is divided into three main stages:
-1. **Oracle Pass (Risk Analysis)**
-2. **Surgeon Pass (Adaptive Anisotropic Filtering)**
-3. **Memory Pass (Temporal Confidence Storage)**
+**1. Oracle Pass (Risk Analysis)
+2. Surgeon Pass (Adaptive Spatial Filtering)
+3. Phase Stabilization Pass
+4. History Pass**
 
 Each stage has a different performance profile.
 
@@ -479,6 +519,9 @@ The filter dynamically changes its behavior:
 The maximum filter radius is intentionally limited.
 DASR uses a small number of directional taps rather than a large-radius blur.
 This avoids unnecessary texture sampling and preserves image sharpness.
+
+**Phase Stabilization Pass:**
+This stage performs a lightweight temporal phase analysis using only two previously stored spatial frames. Because the search is limited to a small local neighborhood and is activated only in high-risk regions, the additional cost remains moderate while providing a significant reduction of alternating moiré shimmer.
 
 **Memory Pass: Minimal Temporal Overhead**
 The history stage has a very small performance impact.
@@ -544,6 +587,7 @@ DASR can reduce the visible flickering caused by sampling instability, but the u
 DASR does not have access to engine motion vectors.
 Its temporal prediction uses a lightweight local heuristic rather than full motion reconstruction.
 This makes it widely compatible, but it cannot perfectly understand complex object motion, deformation, or particle systems.
+The additional phase-aware stabilization stage further improves robustness against alternating sampling-phase artifacts, but it still cannot replace engine motion vectors for complex object motion.
 
 **Poor Source Rendering**
 No post-processing shader can fully compensate for insufficient source information.
@@ -632,6 +676,51 @@ Helpful for:
 * patterned surfaces.
 
 **Depth Weight:** Allows prioritizing distant geometry, where sub-pixel aliasing becomes more visible.
+
+**Phase Moire Strength:** Controls how strongly the phase-aware stabilization stage blends alternating temporal phases once a valid phase pattern has been detected.
+Higher values:
+* reduce visible moiré shimmer more aggressively;
+* improve stability on difficult high-frequency patterns.
+Lower values:
+* preserve more of the original temporal variation;
+* reduce the possibility of over-stabilization.
+This parameter only affects pixels where the phase detector has already identified a valid alternating pattern.
+
+**Phase Alternation Sensitivity:** Controls how easily DASR recognizes alternating sampling-phase behavior across consecutive frames.
+Higher values:
+* detect weaker A/B/A alternation patterns;
+* increase sensitivity to subtle temporal shimmer.
+Lower values:
+* require a stronger and more consistent phase alternation;
+* reduce false detections in complex scenes.
+In general, this parameter determines how selective the phase detector is before stabilization becomes active.
+
+**Phase Motion Rejection:** Controls how aggressively DASR distinguishes genuine scene motion from phase alternation.
+Higher values:
+* reject temporal blending more often during camera movement;
+* reduce ghosting and motion-related artifacts.
+Lower values:
+* allow phase stabilization to remain active more frequently;
+* may improve shimmer reduction in some scenes, but can increase temporal smearing if set too low.
+
+**Phase Outlier Rejection:** Controls the strength of the temporal outlier rejection stage.
+This mechanism detects isolated one-frame deviations that differ significantly from their temporal neighborhood.
+Higher values:
+* suppress transient temporal spikes;
+* reduce occasional fireflies, block artifacts and unstable one-frame fluctuations.
+Lower values:
+* preserve more of the original temporal variation;
+* reduce the possibility of suppressing legitimate image changes.
+This stage operates independently from the phase alternation detector and only activates when a clear temporal outlier is identified.
+
+**Phase Risk Gate:** Defines the minimum instability confidence required before phase-aware stabilization is allowed to operate.
+Higher values:
+* restrict phase analysis to the most unstable regions;
+* reduce unnecessary temporal processing.
+Lower values:
+* allow the phase detector to activate over a larger portion of the image;
+* improve shimmer reduction on subtle patterns at the cost of increased sensitivity.
+The Risk Gate ensures that phase stabilization complements the existing DASR detectors rather than operating uniformly across the entire frame.
 
 ## General Tuning Strategy - Recommended tuning workflow:
 1. Start from default settings.
