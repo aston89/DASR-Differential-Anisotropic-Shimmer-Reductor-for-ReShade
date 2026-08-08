@@ -848,7 +848,7 @@ float4 PS_PhaseMoireSuppression(float4 pos : SV_Position, float2 uv : TEXCOORD) 
     float allFramesDisagreeLocal =
         smoothstep(0.160, 0.520, min(bestD01, bestD02));
 
-    // Se prev1 matcha benissimo localmente, è più probabile normale camera motion.
+    // If prev1 matches very well locally, it is more likely normal camera motion.
     float prev1MotionMatch =
         1.0 - smoothstep(0.040, 0.150, bestD01);
 
