@@ -16,7 +16,7 @@ sampler2D RiskMapSampler { Texture = RiskMapBuffer; AddressU = Clamp; AddressV =
 texture2D HistoryBuffer { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
 sampler2D HistorySampler { Texture = HistoryBuffer; AddressU = Clamp; AddressV = Clamp; };
 
-// Previous-frame history. Serve per evitare read/write sulla stessa texture.
+// Previous-frame history. Used to avoid read/write on the same texture.
 texture2D HistoryPrevBuffer { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
 sampler2D HistoryPrevSampler { Texture = HistoryPrevBuffer; AddressU = Clamp; AddressV = Clamp; };
 
@@ -29,7 +29,7 @@ texture2D PhaseSpatialBuffer { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; For
 sampler2D PhaseSpatialSampler { Texture = PhaseSpatialBuffer; AddressU = Clamp; AddressV = Clamp; };
 
 // Previous raw spatial frames for A/B/A phase-aware moire detection.
-// Importante: questi buffer salvano lo SpatialBuffer pre-phase, non la history EMA.
+// Important: these buffers store the pre-phase SpatialBuffer, not the EMA history.
 texture2D SpatialPrevBuffer { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
 sampler2D SpatialPrevSampler { Texture = SpatialPrevBuffer; AddressU = Clamp; AddressV = Clamp; };
 
